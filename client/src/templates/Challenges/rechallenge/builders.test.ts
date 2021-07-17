@@ -1,4 +1,4 @@
-import { findIndexHtml } from './builders.js';
+import { findIndexHtml } from './builders';
 
 const withHTML = [
   { history: ['index.html'], contents: 'the index html' },
