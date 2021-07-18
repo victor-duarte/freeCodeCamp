@@ -14,31 +14,30 @@ import {
   transformContents
 } from '../../../../../utils/polyvinyl';
 
-const htmlCatch = '\n<!--fcc-->\n';
-const jsCatch = '\n;/*fcc*/\n';
-const cssCatch = '\n/*fcc*/\n';
+import {
+  getDefaultTemplate,
+  getHeadString,
+  getInitialHtmlFile,
+  getSource
+} from './utils';
 
-const defaultTemplate = ({ source }) => {
-  return `
-  <body id='display-body'style='margin:8px;'>
-    <!-- fcc-start-source -->
-      ${source}
-    <!-- fcc-end-source -->
-  </body>`;
-};
+import { Catch, ConcatHtmlProps } from './prop-types';
 
 const wrapInScript = partial(
   transformContents,
-  content => `${htmlCatch}<script>${content}${jsCatch}</script>`
+  (content: string): string =>
+    `${Catch.HTML}<script>${content}${Catch.JS}</script>`
 );
+
 const wrapInStyle = partial(
   transformContents,
-  content => `${htmlCatch}<style>${content}${cssCatch}</style>`
+  (content: string): string =>
+    `${Catch.HTML}<style>${content}${Catch.CSS}</style>`
 );
+
 const setExtToHTML = partial(setExt, 'html');
-const padContentWithJsCatch = partial(compileHeadTail, jsCatch);
-const padContentWithCssCatch = partial(compileHeadTail, cssCatch);
-// const padContentWithHTMLCatch = partial(compileHeadTail, htmlCatch);
+const padContentWithJsCatch = partial(compileHeadTail, Catch.JS);
+const padContentWithCssCatch = partial(compileHeadTail, Catch.CSS);
 
 export const jsToHtml = cond([
   [
@@ -56,50 +55,15 @@ export const cssToHtml = cond([
   [stubTrue, identity]
 ]);
 
-export function findIndexHtml(files) {
-  const filtered = files.filter(file => wasHtmlFile(file));
-  if (filtered.length > 1) {
-    throw new Error('Too many html blocks in the challenge seed');
-  }
-  return filtered[0];
-}
-
-function wasHtmlFile(file) {
-  return file.history[0] === 'index.html';
-}
-
-export function concatHtml({ required = [], template, files = [] } = {}) {
-  const createBody = template ? _template(template) : defaultTemplate;
-  const head = required
-    .map(({ link, src }) => {
-      if (link && src) {
-        throw new Error(`
-A required file can not have both a src and a link: src = ${src}, link = ${link}
-`);
-      }
-      if (src) {
-        return `<script src='${src}' type='text/javascript'></script>`;
-      }
-      if (link) {
-        return `<link href='${link}' rel='stylesheet' />`;
-      }
-      return '';
-    })
-    .reduce((head, element) => head.concat(element));
-
-  const indexHtml = findIndexHtml(files);
-
-  const source = files.reduce((source, file) => {
-    if (!indexHtml) return source.concat(file.contents, htmlCatch);
-    if (
-      indexHtml.importedFiles.includes(file.history[0]) ||
-      wasHtmlFile(file)
-    ) {
-      return source.concat(file.contents, htmlCatch);
-    } else {
-      return source;
-    }
-  }, '');
+export function concatHtml({
+  files = [],
+  required = [],
+  template
+}: ConcatHtmlProps): string {
+  const createBody = template ? _template(template) : getDefaultTemplate;
+  const head = getHeadString(required);
+  const indexHtml = getInitialHtmlFile(files);
+  const source = getSource(files, indexHtml);
 
   return `<head>${head}</head>${createBody({ source })}`;
 }
