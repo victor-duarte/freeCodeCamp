@@ -1,5 +1,5 @@
 import { getTransformers } from '../rechallenge/transformers';
-import { cssToHtml, jsToHtml, concatHtml } from '../rechallenge/builders.js';
+import { concatHtml, cssToHtml, jsToHtml } from '../rechallenge/builders.ts';
 import { challengeTypes } from '../../../../utils/challengeTypes';
 import createWorker from './worker-executor';
 import {
