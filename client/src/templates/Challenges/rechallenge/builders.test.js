@@ -1,4 +1,4 @@
-import { findIndexHtml } from './builders.js';
+import { getInitialHtmlFile } from './builders.js';
 
 const withHTML = [
   { history: ['index.html'], contents: 'the index html' },
@@ -16,14 +16,14 @@ const tooMuchHTML = [
   { history: ['index.html'], contents: 'index html three' }
 ];
 
-// TODO: write tests for concatHtml instead, since findIndexHtml should not be
+// TODO: write tests for concatHtml instead, since getInitialHtmlFile should not be
 // exported.
 
-describe('findIndexHtml', () => {
+describe('getInitialHtmlFile', () => {
   it('should return the index.html file from an array', () => {
     expect.assertions(1);
 
-    expect(findIndexHtml(withHTML)).toStrictEqual({
+    expect(getInitialHtmlFile(withHTML)).toStrictEqual({
       history: ['index.html'],
       contents: 'the index html'
     });
@@ -32,13 +32,13 @@ describe('findIndexHtml', () => {
   it('should return undefined when the index.html file is missing', () => {
     expect.assertions(1);
 
-    expect(findIndexHtml(withoutHTML)).toBeUndefined();
+    expect(getInitialHtmlFile(withoutHTML)).toBeUndefined();
   });
 
   it('should throw if there are two or more index.htmls', () => {
     expect.assertions(1);
 
-    expect(() => findIndexHtml(tooMuchHTML)).toThrowError(
+    expect(() => getInitialHtmlFile(tooMuchHTML)).toThrowError(
       'Too many html blocks in the challenge seed'
     );
   });
