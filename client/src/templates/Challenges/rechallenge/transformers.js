@@ -13,15 +13,16 @@ import {
 import protect from '@freecodecamp/loop-protect';
 
 import {
-  transformContents,
-  transformHeadTailAndContents,
+  compileHeadTail,
   setExt,
   setImportedFiles,
-  compileHeadTail
+  transformContents,
+  transformHeadTailAndContents
 } from '../../../../../utils/polyvinyl';
+
 import createWorker from '../utils/worker-executor';
 
-// the config files are created during the build, but not before linting
+// The config files are created during the build, but not before linting.
 // eslint-disable-next-line import/no-unresolved
 import sassData from '../../../../../config/client/sass-compile.json';
 
@@ -31,12 +32,20 @@ const protectTimeout = 100;
 const testProtectTimeout = 1500;
 const loopsPerTimeoutCheck = 2000;
 
+/**
+ * Logs a warning message that tests could fail.
+ * @param {string|number} line Line number of potential issue.
+ */
 function loopProtectCB(line) {
   console.log(
     `Potential infinite loop detected on line ${line}. Tests may fail if this is not changed.`
   );
 }
 
+/**
+ * Logs an error message of why tests could be failing.
+ * @param {string|number} line line number of potential issue.
+ */
 function testLoopProtectCB(line) {
   console.log(
     `Potential infinite loop detected on line ${line}. Tests may be failing because of this.`
@@ -51,15 +60,18 @@ let babelOptionsJSBase, babelOptionsJS, babelOptionsJSX, babelOptionsJSPreview;
 
 async function loadBabel() {
   if (Babel) return;
+
   /* eslint-disable no-inline-comments */
   Babel = await import(
     /* webpackChunkName: "@babel/standalone" */ '@babel/standalone'
   );
   /* eslint-enable no-inline-comments */
+
   Babel.registerPlugin(
     'loopProtection',
     protect(protectTimeout, loopProtectCB)
   );
+
   Babel.registerPlugin(
     'testLoopProtection',
     protect(testProtectTimeout, testLoopProtectCB, loopsPerTimeoutCheck)
@@ -77,10 +89,12 @@ async function loadPresetEnv() {
   babelOptionsJSBase = {
     presets: [presetEnv]
   };
+
   babelOptionsJS = {
     ...babelOptionsJSBase,
     plugins: ['testLoopProtection']
   };
+
   babelOptionsJSPreview = {
     ...babelOptionsJSBase,
     plugins: ['loopProtection']
@@ -93,10 +107,12 @@ async function loadPresetReact() {
     presetReact = await import(
       /* webpackChunkName: "@babel/preset-react" */ '@babel/preset-react'
     );
+
   if (!presetEnv)
     presetEnv = await import(
       /* webpackChunkName: "@babel/preset-env" */ '@babel/preset-env'
     );
+
   /* eslint-enable no-inline-comments */
   babelOptionsJSX = {
     plugins: ['loopProtection'],
@@ -135,6 +151,7 @@ function tryTransform(wrap = identity) {
       // parse bad code (syntax/type errors etc...)
       throw result;
     }
+
     return result;
   };
 }
@@ -171,23 +188,31 @@ const babelTransformer = options => {
   ]);
 };
 
+/**
+ * Gets babel config options
+ * @param {obj.preview} boolean
+ * @param {obj.protect} boolean
+ * @returns Babel config options
+ */
 function getBabelOptions({ preview = false, protect = true }) {
   let options = babelOptionsJSBase;
-  // we always protect the preview, since it evaluates as the user types and
-  // they may briefly have infinite looping code accidentally
+  // We always protect the preview, since it evaluates as the user types and
+  // they may briefly have infinite looping code accidentally.
   if (protect) {
     options = preview ? babelOptionsJSPreview : babelOptionsJS;
   } else {
     options = preview ? babelOptionsJSPreview : options;
   }
+
   return options;
 }
 
 const sassWorker = createWorker(sassCompile);
 async function transformSASS(element) {
-  // we only teach scss syntax, not sass. Also the compiler does not seem to be
+  // We only teach scss syntax, not sass. Also the compiler does not seem to be
   // able to deal with sass.
   const styleTags = element.querySelectorAll('style[type~="text/scss"]');
+
   await Promise.all(
     [].map.call(styleTags, async style => {
       style.type = 'text/css';
@@ -211,6 +236,7 @@ const transformHtml = async function (file) {
   const div = document.createElement('div');
   div.innerHTML = file.contents;
   await Promise.all([transformSASS(div), transformScript(div)]);
+
   return transformContents(() => div.innerHTML, file);
 };
 
@@ -228,10 +254,12 @@ const transformIncludes = async function (fileP) {
     div.querySelector('script[src="script.js"]') ??
     div.querySelector('script[src="./script.js"]');
   const importedFiles = [];
+
   if (link) {
     importedFiles.push('index.css');
     link.remove();
   }
+
   if (script) {
     importedFiles.push('index.js');
     script.remove();
@@ -250,6 +278,7 @@ export const composeHTML = cond([
       partial(transformHeadTailAndContents, source => {
         const div = document.createElement('div');
         div.innerHTML = source;
+
         return div.innerHTML;
       }),
       partial(compileHeadTail, '')
