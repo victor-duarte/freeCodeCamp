@@ -53,7 +53,7 @@ export const cssToHtml = cond([
  * @params {Object} obj.source Generated source (markup)
  * @return {string} The interpolated `<body>` string
  */
-export function getDefaultTemplate({ source }) {
+function getDefaultTemplate({ source }) {
   return `
   <body id='display-body'style='margin:8px;'>
     <!-- fcc-start-source -->

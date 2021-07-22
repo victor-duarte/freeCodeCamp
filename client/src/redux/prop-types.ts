@@ -315,20 +315,21 @@ export type CompletedChallenge = {
   // TODO: remove once files->challengeFiles is refactored
   files?: ChallengeFileType[] | null;
 };
+
+export interface File extends FileKeyChallengeType {
+  editableContents: string;
+  editableRegionBoundaries: number[];
+  error?: string | null;
+  history: string[];
+  path: string;
+  seed: string;
+  seedEditableRegionBoundaries?: number[];
+}
+
 // TODO: renames: files => challengeFiles; key => fileKey; #42489
 export type ChallengeFileType =
   | {
-      [T in FileKeyTypes]:
-        | ({
-            editableContents: string;
-            editableRegionBoundaries: number[];
-            error?: string | null;
-            history: string[];
-            path: string;
-            seed: string;
-            seedEditableRegionBoundaries?: number[];
-          } & FileKeyChallengeType)
-        | null;
+      [T in FileKeyTypes]: File | null;
     }
   | Record<string, never>;
 
